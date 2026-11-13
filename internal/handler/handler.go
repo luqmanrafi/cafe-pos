@@ -13,7 +13,10 @@ type Handler struct {
 }
 
 func New() (*Handler, error){
-	tmpl, err := template.ParseGlob("templates/*.html")
+	funcs := template.FuncMap{
+		"rupiah": formatRupiah,
+	}
+	tmpl, err := template.New("").Funcs(funcs).ParseGlob("templates/*.html")
 	if err != nil{
 		return nil, err
 	}
