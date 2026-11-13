@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menu Cafe</title>
+</head>
+<body>
+  <h1>Menu</h1>
+  <ul>
+    {{range .}}
+      <li>{{.Name}} ({{.Category}}) - Rp{{.Price}}</li>
+    {{else}}
+      <li>Belum ada menu</li>
+    {{end}}
+  </ul>
+</body>
+</html>
