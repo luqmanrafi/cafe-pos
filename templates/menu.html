@@ -7,6 +7,7 @@
 </head>
 <body>
   <h1>Menu</h1>
+  <p><a href="/menu/new">+ Tambah menu</a></p>
   <ul>
     {{range .}}
       <li>{{.Name}} ({{.Category}}) - {{.Price | rupiah}}</li>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tambah Menu</title>
+</head>
+<body>
+  <h1>Tambah Menu</h1>
+
+  {{if .Error}}
+    <p style="color: red;">{{.Error}}</p>
+  {{end}}
+
+  <form method="POST" action="/menu">
+    <p>
+      <label>Nama<br>
+        <input type="text" name="name" value="{{.Name}}" required>
+      </label>
+    </p>
+    <p>
+      <label>Harga (Rp)<br>
+        <input type="number" name="price" value="{{.Price}}" min="1" required>
+      </label>
+    </p>
+    <p>
+      <label>Kategori<br>
+        <input type="text" name="category" value="{{.Category}}" required>
+      </label>
+    </p>
+    <button type="submit">Simpan</button>
+  </form>
+
+  <p><a href="/menu">Kembali ke menu</a></p>
+</body>
+</html>

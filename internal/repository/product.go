@@ -38,3 +38,11 @@ func(r *ProductRepository) ListActive(ctx context.Context) ([]model.Product, err
 	}
 	return products, rows.Err()
 }
+
+func(r *ProductRepository) Create(ctx context.Context, p model.Product) error{
+	_, err := r.db.Exec(ctx, 
+	`INSERT INTO products (name, price, category) 
+	VALUES ($1, $2, $3)`,
+	p.Name, p.Price, p.Category)
+	return err
+}
