@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/luqmanrafi/cafe-pos/internal/handler"
 	"github.com/luqmanrafi/cafe-pos/internal/repository"
+	"github.com/luqmanrafi/cafe-pos/internal/service"
 )
 
 func main() {
@@ -25,8 +26,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	productsRepo := repository.NewProductRepository(pool)
-	products, err := productsRepo.ListActive(ctx)
+	productRepo := repository.NewProductRepository(pool)
+	productService := service.NewProductService(productRepo)
+	products, err := productRepo.ListActive(ctx)
 	if err != nil {
 		log.Fatal("gagal mengambil menu: ", err)
 	}
@@ -34,7 +36,7 @@ func main() {
 		log.Println(p.Name, p.Price, p.Category)
 	}
 	
-	h, err := handler.New()
+	h, err := handler.New(productService)
 	if err != nil{
 		log.Fatal(err)
 	}

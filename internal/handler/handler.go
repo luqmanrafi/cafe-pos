@@ -5,14 +5,15 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/luqmanrafi/cafe-pos/internal/model"
+	"github.com/luqmanrafi/cafe-pos/internal/service"
 )
 
 type Handler struct {
 	tmpl *template.Template
+	products *service.ProductService
 }
 
-func New() (*Handler, error){
+func New(products *service.ProductService) (*Handler, error){
 	funcs := template.FuncMap{
 		"rupiah": formatRupiah,
 	}
@@ -20,7 +21,7 @@ func New() (*Handler, error){
 	if err != nil{
 		return nil, err
 	}
-	return &Handler{tmpl: tmpl}, nil
+	return &Handler{tmpl: tmpl, products: products}, nil
 }
 
 func (h *Handler) Routes() http.Handler {
@@ -35,15 +36,15 @@ func (h *Handler) health(w http.ResponseWriter, r *http.Request){
 }
 
 func (h *Handler) menu(w http.ResponseWriter, r *http.Request){
-	products := []model.Product{
-		{ID: 1, Name: "Latte", Price: 28000, Category: "Kopi", Active: true},
-		{ID: 2, Name: "Espresso", Price: 20000, Category: "Kopi", Active: true},
-		{ID: 3, Name: "Croissant", Price: 22000, Category: "Dessert", Active: true},
-		{ID: 4, Name: "Cheesecake", Price: 24000, Category: "Dessert", Active: false},
+	products, err := h.products.ListMenu(r.Context())
+	if err != nil{
+		log.Println("gagal mengambil menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusInternalServerError)
+		return
 	}
 
 	if err := h.tmpl.ExecuteTemplate(w, "menu.html", products); err != nil{
-		log.Println("gagal render menu:", err)
+		log.Println("gagal render menu: ", err )
 		http.Error(w, "terjadi kesalahan", http.StatusInternalServerError)
 	}
 }
