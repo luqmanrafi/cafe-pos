@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/luqmanrafi/cafe-pos/internal/model"
 	"github.com/luqmanrafi/cafe-pos/internal/service"
 )
 
@@ -40,6 +41,9 @@ func (h *Handler) Routes() http.Handler {
 	mux.HandleFunc("GET /menu", h.menu)
 	mux.HandleFunc("GET /menu/new", h.menuForm)
 	mux.HandleFunc("POST /menu", h.menuCreate)
+	mux.HandleFunc("POST /menu/{id}/deactivate", h.menuDeactivate)
+	mux.HandleFunc("POST /menu/{id}/activate", h.menuActivate)
+	mux.HandleFunc("GET /menu/manage", h.menuManage)
 	return mux
 }
 
@@ -105,4 +109,56 @@ func(h *Handler)renderForm(w http.ResponseWriter, data menuFormData){
 	if err := h.tmpl.ExecuteTemplate(w, "menu_form.html", data); err != nil{
 		log.Println("gagal render form: ", err)
 	}
+}
+
+func(h *Handler)menuActivate(w http.ResponseWriter, r *http.Request){
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil{
+		http.Error(w, "ID tidak ditemukan", http.StatusBadRequest)
+		return
+	}
+	if err := h.products.SetActive(r.Context(), id, true); err != nil{
+		if errors.Is(err, model.ErrNotFound){
+			http.NotFound(w, r)
+			return
+		}
+		log.Println("gagal mengaktifkan menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusBadRequest)
+		return
+	}
+	http.Redirect(w, r, "/menu", http.StatusSeeOther)
+
+} 
+
+func(h *Handler)menuManage(w http.ResponseWriter, r *http.Request){
+	products, err := h.products.ListAll(r.Context())
+	if err != nil{
+		log.Println("gagal memuat menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusBadRequest)
+		return
+	}
+	if err := h.tmpl.ExecuteTemplate(w, "menu_manages.html", products); err != nil{
+		log.Println("gagal render tampilan kelola menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusBadRequest)
+	}
+
+}
+
+func(h *Handler)menuDeactivate(w http.ResponseWriter, r *http.Request){
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID tidak ditemukan", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.products.SetActive(r.Context(), id, false); err != nil{
+		if errors.Is(err, model.ErrNotFound){
+			http.NotFound(w, r)
+			return
+		}
+		log.Println("gagal menonaktifkan menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/menu/manage", http.StatusSeeOther)
 }

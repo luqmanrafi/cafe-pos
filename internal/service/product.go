@@ -8,7 +8,9 @@ import (
 )
 type productsRepo interface{
 	ListActive(ctx context.Context) ([]model.Product, error)
+	ListAll(ctx context.Context)([]model.Product, error)
 	Create(ctx context.Context, p model.Product) error
+	SetActive(ctx context.Context, id int, active bool) error
 }
 
 type ProductService struct{
@@ -31,6 +33,10 @@ func (s *ProductService) ListMenu(ctx context.Context) ([]model.Product, error){
 	return s.repo.ListActive(ctx)
 }
 
+func (s *ProductService) ListAll(ctx context.Context)([]model.Product, error){
+	return s.repo.ListAll(ctx)
+}
+
 func (s *ProductService) Create(ctx context.Context, name string, price int, category string) error{
 	name = strings.TrimSpace(name)
 	category = strings.TrimSpace(category)
@@ -50,4 +56,8 @@ func (s *ProductService) Create(ctx context.Context, name string, price int, cat
 		Price: price,
 		Category: category,
 	})
+}
+
+func(s *ProductService) SetActive(ctx context.Context, id int, active bool)error{
+	return s.repo.SetActive(ctx, id, active)
 }

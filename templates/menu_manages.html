@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kelola Menu</title>
+</head>
+<body>
+  <h1>Kelola Menu</h1>
+  <p><a href="/menu/new">+ Tambah menu</a> | <a href="/menu">Lihat menu</a></p>
+
+  <ul>
+    {{range .}}
+      <li>
+        {{.Name}} ({{.Category}}) - {{.Price | rupiah}}
+        {{if .Active}}
+          <form method="POST" action="/menu/{{.ID}}/deactivate" style="display:inline">
+            <button type="submit">Nonaktifkan</button>
+          </form>
+        {{else}}
+          <em>(nonaktif)</em>
+          <form method="POST" action="/menu/{{.ID}}/activate" style="display:inline">
+            <button type="submit">Aktifkan</button>
+          </form>
+        {{end}}
+      </li>
+    {{else}}
+      <li>Belum ada menu</li>
+    {{end}}
+  </ul>
+</body>
+</html>

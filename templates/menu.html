@@ -7,10 +7,16 @@
 </head>
 <body>
   <h1>Menu</h1>
+  <p><a href="/menu/manage">Kelola menu</a></p>
   <p><a href="/menu/new">+ Tambah menu</a></p>
   <ul>
     {{range .}}
-      <li>{{.Name}} ({{.Category}}) - {{.Price | rupiah}}</li>
+      <li>
+  {{.Name}} ({{.Category}}) - {{.Price | rupiah}}
+  <form method="POST" action="/menu/{{.ID}}/deactivate" style="display:inline">
+    <button type="submit">Nonaktifkan</button>
+  </form>
+</li>
     {{else}}
       <li>Belum ada menu</li>
     {{end}}
