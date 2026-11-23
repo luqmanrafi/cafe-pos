@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/luqmanrafi/cafe-pos/internal/model"
 )
@@ -78,6 +80,35 @@ func(r *ProductRepository) SetActive(ctx context.Context, id int, active bool) e
 	}
 
 	if tag.RowsAffected() == 0 {
+		return model.ErrNotFound
+	}
+	return nil
+}
+
+func(r *ProductRepository)GetByID(ctx context.Context, id int)(model.Product, error){
+	var p model.Product
+	err := r.db.QueryRow(ctx, `SELECT id, name,  price, category, active
+	FROM products
+	WHERE id = $1`, id).Scan(&p.ID, &p.Name, &p.Price, &p.Category, &p.Active)
+
+	if errors.Is(err, pgx.ErrNoRows){
+		return model.Product{}, model.ErrNotFound
+	}
+
+	if err != nil {
+		return model.Product{}, err
+	}
+	return p, nil	
+}
+
+func(r *ProductRepository)Update(ctx context.Context, p model.Product)error{
+	tag, err := r.db.Exec(ctx, `UPDATE products
+	SET name = $1, price = $2, category = $3, updated_at = now()
+	WHERE id = $4`, p.Name, p.Price, p.Category, p.ID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0{
 		return model.ErrNotFound
 	}
 	return nil

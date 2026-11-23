@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,6 +19,8 @@ type Handler struct {
 }
 
 type menuFormData struct{
+	Title 		string
+	Action 		string
 	Error 		string
 	Name 		string
 	Price 		string
@@ -41,6 +44,8 @@ func (h *Handler) Routes() http.Handler {
 	mux.HandleFunc("GET /menu", h.menu)
 	mux.HandleFunc("GET /menu/new", h.menuForm)
 	mux.HandleFunc("POST /menu", h.menuCreate)
+	mux.HandleFunc("GET /menu/{id}/edit", h.menuEditForm)
+	mux.HandleFunc("POST /menu/{id}", h.menuUpdate)
 	mux.HandleFunc("POST /menu/{id}/deactivate", h.menuDeactivate)
 	mux.HandleFunc("POST /menu/{id}/activate", h.menuActivate)
 	mux.HandleFunc("GET /menu/manage", h.menuManage)
@@ -66,7 +71,7 @@ func (h *Handler) menu(w http.ResponseWriter, r *http.Request){
 }
 
 func (h *Handler) menuForm(w http.ResponseWriter, r *http.Request){
-	if err := h.tmpl.ExecuteTemplate(w, "menu_form.html", menuFormData{}); err != nil {
+	if err := h.tmpl.ExecuteTemplate(w, "menu_form.html", menuFormData{Title: "Tambah menu", Action: "/menu"}); err != nil {
 		log.Println("gagal render form: ", err)
 		http.Error(w, "terjadi kesalahan", http.StatusInternalServerError)
 	}
@@ -102,6 +107,79 @@ func(h *Handler) menuCreate(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	http.Redirect(w, r, "/menu", http.StatusSeeOther)
+}
+
+func(h *Handler)menuEditForm(w http.ResponseWriter, r *http.Request){
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil{
+		http.Error(w, "ID tidak valid", http.StatusBadRequest)
+		return
+	}
+	p, err := h.products.GetByID(r.Context(), id)
+	if err != nil{
+		if errors.Is(err, model.ErrNotFound){
+			http.NotFound(w, r)
+			return
+		}
+		log.Println("gagal ambil menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusInternalServerError)
+		return
+	}
+
+	data := menuFormData{
+		Title: "Edit menu",
+		Action: fmt.Sprintf("/menu/%d", id),
+		Name: p.Name,
+		Price: strconv.Itoa(p.Price),
+		Category: p.Category,
+	}
+
+	if err := h.tmpl.ExecuteTemplate(w, "menu_form.html", data); err != nil {
+		log.Println("gagal render form edit", err)
+	}
+}
+
+func(h *Handler) menuUpdate(w http.ResponseWriter, r *http.Request){
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID tidak ditemukan", http.StatusBadRequest)
+		return
+	}
+
+	name := r.PostFormValue("name")
+	priceStr := r.PostFormValue("price")
+	category := r.PostFormValue("category")
+
+	data := menuFormData{
+		Title: "Edit menu",
+		Action: fmt.Sprintf("/menu/%d", id),
+		Name: name,
+		Price: priceStr,
+		Category: category,
+	}
+
+	price, err := strconv.Atoi(strings.TrimSpace(priceStr))
+	if err != nil {
+		data.Error = "Harga harus berupa angka"
+		h.renderForm(w, data)
+		return
+	}
+	if err := h.products.Update(r.Context(), id, name, price, category); err != nil{
+		var ve service.ValidationError
+		if errors.As(err, &ve){
+			data.Error = ve.Message
+			h.renderForm(w, data)
+			return
+		}
+		if errors.Is(err, model.ErrNotFound){
+			http.NotFound(w, r)
+			return
+		}
+		log.Println("gagal update menu: ", err)
+		http.Error(w, "terjadi kesalahan", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w,r, "/menu/manage", http.StatusSeeOther)
 }
 
 func(h *Handler)renderForm(w http.ResponseWriter, data menuFormData){

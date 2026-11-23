@@ -13,6 +13,7 @@
     {{range .}}
       <li>
         {{.Name}} ({{.Category}}) - {{.Price | rupiah}}
+        <a href="/menu/{{.ID}}/edit">Edit</a>
         {{if .Active}}
           <form method="POST" action="/menu/{{.ID}}/deactivate" style="display:inline">
             <button type="submit">Nonaktifkan</button>
